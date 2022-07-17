@@ -1,8 +1,9 @@
 # Carla environment settings
-CARLA_PATH = '../CARLA_0.9.6_Python_3.7'  # Path to Carla root folder
+CARLA_PATH = '../CARLA_0.9.11/WindowsNoEditor'  # Path to Carla root folder
 CARLA_HOSTS_TYPE = 'local'  # 'local' or 'remote', 'local' means that script can start and restart Carla Simulator
 CARLA_HOSTS_NO = 1
-CARLA_HOSTS = [['localhost', 2000, 10], ['localhost', 2002, 10]]  # List of hosts and ports and worlds to use, at least 2 ports of difference as Carla uses N and N+1 port, Town01 to Town97 for world currently, Town01 to Town07 for world are currently available, int number instead - random world change interval in minutes
+# CARLA_HOSTS = [['localhost', 2000, 10], ['localhost', 3000, 10]]  # List of hosts and ports and worlds to use, at least 2 ports of difference as Carla uses N and N+1 port, Town01 to Town97 for world currently, Town01 to Town07 for world are currently available, int number instead - random world change interval in minutes
+CARLA_HOSTS = [['localhost', 2000, 10]]
 SECONDS_PER_EPISODE = 10
 EPISODE_FPS = 60  # Desired
 IMG_WIDTH = 480

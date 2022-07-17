@@ -7,7 +7,6 @@ class PauseObject:
     value = 0
 
 if __name__ == '__main__':
-    
     # Load hparams if they are being saved by trainer
     hparams = get_hparams(playing=True)
 

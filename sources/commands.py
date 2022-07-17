@@ -2,6 +2,7 @@ import os
 import time
 from sources import STOP
 import settings
+import traceback
 
 
 class Commands:
@@ -216,6 +217,7 @@ class Commands:
                         output += f'Command not recognized'
 
             except Exception as e:
+                traceback.print_exc()
                 error += str(e) + '\n'
 
             # Remove command file

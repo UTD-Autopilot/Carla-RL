@@ -1,2 +1,7 @@
-
+__pycache__/
 .idea/
+
+/logs
+/venv
+/tmp
+/checkpoint

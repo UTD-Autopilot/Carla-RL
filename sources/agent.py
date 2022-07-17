@@ -13,17 +13,13 @@ import cv2
 # Try to mute and then load Tensorflow and Keras
 # Muting seems to not work lately on Linux in any way
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-stdin = sys.stdin
-sys.stdin = open(os.devnull, 'w')
-stderr = sys.stderr
-sys.stderr = open(os.devnull, 'w')
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
-import keras.backend.tensorflow_backend as backend
-from keras.optimizers import Adam
-from keras.models import load_model, Model
-sys.stdin = stdin
-sys.stderr = stderr
+# import keras.backend.tensorflow_backend as backend
+import tensorflow.keras.backend as backend
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import load_model, Model
+import traceback
 
 
 # Agent class
@@ -249,7 +245,8 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
         try:
             env = CarlaEnv(carla_instance, seconds_per_episode)
             break
-        except:
+        except Exception as e:
+            traceback.print_exc()
             agent_stats[0] = AGENT_STATE.error
             time.sleep(1)
 
@@ -322,7 +319,8 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
 
             # Prepare image accordingly to settings
             current_state[0] = agent.prepare_image(current_state[0], create=True)
-        except:
+        except Exception as e:
+            traceback.print_exc()
 
             # When above fails, set error state...
             agent_stats[0] = AGENT_STATE.error
@@ -362,6 +360,7 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
         conv_min = None
         conv_max = None
 
+        print("Agent: Episode begin.")
         # Steps
         while True:
 
@@ -381,7 +380,7 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
                     if time.time() > wait_for_frame_start + 1:
                         break
                     time.sleep(0.001)
-
+            #print("Stepping 1")
             # Get new action - either random one or predicted by the model
             if np.random.random() > epsilon[0]:
                 # Get action from predicted Q values
@@ -426,15 +425,16 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
             else:
                 # Get random action
                 action = np.random.randint(0, env.action_space_size)
-
+            #print("Stepping 2")
             # Try to step environment, break episode on error
             try:
                 new_state, reward, done, _ = env.step(action)
-            except:
+            except Exception as e:
+                traceback.print_exc()
                 agent_stats[0] = AGENT_STATE.error
                 time.sleep(1)
                 break
-
+            #print("Stepping 3")
             # Show a preview if set (env)
             if show_preview[0] == 1:
                 cv2.imshow(f'Agent {id+1} - preview', new_state[0])
@@ -468,11 +468,12 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
                     env.preview_camera_enabled = False
             except:
                 pass
-
+            #print("Stepping 4")
             # Count episode reward
             episode_reward += reward
 
             # Put transition into a shared Queue for trainer
+            #print("Transition: ", settings.AGENT_IMG_TYPE, AGENT_IMAGE_TYPE.stacked, step)
             if settings.AGENT_IMG_TYPE != AGENT_IMAGE_TYPE.stacked or step >= 3:
                 transitions.put_nowait((current_state, action, reward, new_state, done))
 
@@ -515,7 +516,7 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
 
             # ... counts mean value from last n frames
             agent_stats[2] = len(fps_counter)/sum(fps_counter)
-
+        print("Agent: Episode done.")
         # Episode ended, remove actors
         try:
             env.destroy_agents()
@@ -572,6 +573,7 @@ def run(id, carla_instance, stop, pause, episode, epsilon, show_preview, weights
 
     # Stop command, exit
 
+    print("Agent terminating...")
     # Set terminate flag for weight updater thread and wait for it to finish
     agent.terminate = True
     weight_updater.join()

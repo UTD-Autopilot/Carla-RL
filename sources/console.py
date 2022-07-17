@@ -197,7 +197,7 @@ class ConsoleStats:
             if self.stop.value == STOP.stopped:
                 return
 
-            time.sleep(0.2)
+            time.sleep(1)
 
     @staticmethod
     def print_short(fps_counter, env, qs, action, action_name):

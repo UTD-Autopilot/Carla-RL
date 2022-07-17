@@ -16,6 +16,7 @@ from dataclasses import dataclass
 import psutil
 import subprocess
 from queue import Queue
+import traceback
 
 
 @dataclass
@@ -72,7 +73,7 @@ class CarlaEnv:
 
         # Set a client and timeouts
         self.client = carla.Client(*settings.CARLA_HOSTS[carla_instance][:2])
-        self.client.set_timeout(2.0)
+        # self.client.set_timeout(2.0)
 
         # Get currently running world
         self.world = self.client.get_world()
@@ -121,7 +122,7 @@ class CarlaEnv:
                 self.vehicle = self.world.spawn_actor(self.model_3, self.transform)
                 break
             except:
-                time.sleep(0.01)
+                time.sleep(0.2)
 
             # If that can't be done in 3 seconds - forgive (and allow main process to handle for this problem)
             if time.time() > spawn_start + 3:
@@ -190,6 +191,7 @@ class CarlaEnv:
         self.colsensor = self.world.spawn_actor(colsensor, carla.Transform(), attach_to=self.vehicle)
 
         # Register a callback called every time sensor sends a new data
+        # TODO: This will cause carla crash on 0.9.12 and above: https://github.com/carla-simulator/carla/issues/4861
         self.colsensor.listen(self._collision_data)
 
         # Add the collision sensor to the list of actors
@@ -384,7 +386,7 @@ def start(playing=False):
         while True:
             try:
                 client = carla.Client(*settings.CARLA_HOSTS[process_no][:2])
-                map_name = client.get_world().get_map().name
+                map_name = client.get_world().get_map().name.split('/')[-1]
                 if len(settings.CARLA_HOSTS[process_no]) == 2 or not settings.CARLA_HOSTS[process_no][2]:
                     break
                 if isinstance(settings.CARLA_HOSTS[process_no][2], int):
@@ -395,15 +397,17 @@ def start(playing=False):
                     carla.Client(*settings.CARLA_HOSTS[process_no][:2]).load_world(map_choice)
                     while True:
                         try:
-                            while carla.Client(*settings.CARLA_HOSTS[process_no][:2]).get_world().get_map().name != map_choice:
-                                time.sleep(0.1)
+                            while carla.Client(*settings.CARLA_HOSTS[process_no][:2]).get_world().get_map().name.split('/')[-1] != map_choice:
+                                print("Waiting for map change...")
+                                time.sleep(1)
                             break
-                        except:
+                        except Exception as e:
+                            traceback.print_exc()
                             pass
                 break
             except Exception as e:
-                #print(str(e))
-                time.sleep(0.1)
+                traceback.print_exc()
+                time.sleep(1)
 
 
 # Retarts Carla simulator
@@ -420,7 +424,7 @@ def restart(playing=False):
         while True:
             try:
                 client = carla.Client(*settings.CARLA_HOSTS[process_no][:2])
-                map_name = client.get_world().get_map().name
+                map_name = client.get_world().get_map().name.split('/')[-1]
                 if len(settings.CARLA_HOSTS[process_no]) == 2 or not settings.CARLA_HOSTS[process_no][2]:
                     break
                 if isinstance(settings.CARLA_HOSTS[process_no][2], int):
@@ -431,7 +435,7 @@ def restart(playing=False):
                     carla.Client(*settings.CARLA_HOSTS[process_no][:2]).load_world(map_choice)
                     while True:
                         try:
-                            while carla.Client(*settings.CARLA_HOSTS[process_no][:2]).get_world().get_map().name != map_choice:
+                            while carla.Client(*settings.CARLA_HOSTS[process_no][:2]).get_world().get_map().name.split('/')[-1] != map_choice:
                                 time.sleep(0.1)
                                 retries += 1
                                 if retries >= 60:
@@ -445,8 +449,8 @@ def restart(playing=False):
 
                 break
             except Exception as e:
-                #print(str(e))
-                time.sleep(0.1)
+                traceback.print_exc()
+                time.sleep(1)
 
             retries += 1
             if retries >= 60:
@@ -641,7 +645,7 @@ class CarlaEnvSettings:
                 # If restart flag is being set - wait
                 if self.restart:
                     self.state = CARLA_SETTINGS_STATE.restarting
-                    time.sleep(0.1)
+                    time.sleep(1)
                     continue
 
                 # Clean car npcs
@@ -649,7 +653,7 @@ class CarlaEnvSettings:
 
                 # Connect to Carla, get worls and map
                 self.client = carla.Client(*settings.CARLA_HOSTS[self.process_no][:2])
-                self.client.set_timeout(2.0)
+                # self.client.set_timeout(2.0)
                 self.world = self.client.get_world()
                 self.map = self.world.get_map()
                 self.world_name = self.map.name
@@ -680,6 +684,7 @@ class CarlaEnvSettings:
 
             # In case of error, report it, wait a second and try again
             except Exception as e:
+                traceback.print_exc()
                 self.state = CARLA_SETTINGS_STATE.error
                 time.sleep(1)
                 continue
@@ -864,5 +869,5 @@ class CarlaEnvSettings:
 
                 # In case of error, report it (reset flag set externally might break this loop only)
                 except Exception as e:
-                    #print(str(e))
+                    traceback.print_exc()
                     self.state = CARLA_SETTINGS_STATE.error

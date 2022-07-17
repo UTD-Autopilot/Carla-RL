@@ -14,15 +14,11 @@ from threading import Thread
 # Try to mute and then load Tensorflow
 # Muting seems to not work lately on Linux in any way
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-stdin = sys.stdin
-sys.stdin = open(os.devnull, 'w')
-stderr = sys.stderr
-sys.stderr = open(os.devnull, 'w')
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
-import keras.backend.tensorflow_backend as backend
-sys.stdin = stdin
-sys.stderr = stderr
+# import keras.backend.tensorflow_backend as backend
+import tensorflow.keras.backend as backend
+import traceback
 
 
 # Trainer class
@@ -93,7 +89,6 @@ class ARTDQNTrainer(ARTDQNAgent):
 
     # Trains main network every step during episode
     def train(self):
-
         # Start training only if certain number of transitions is already being saved in replay memory
         if len(self.replay_memory) < settings.MIN_REPLAY_MEMORY_SIZE:
             return False
@@ -183,7 +178,7 @@ class ARTDQNTrainer(ARTDQNAgent):
     # Returns current learning rate and decay values from Adam optimizer
     def get_lr_decay(self):
         lr = self.model.optimizer.lr
-        if self.model.optimizer.initial_decay > 0:
+        if self.model.optimizer._initial_decay > 0:
             lr = lr * (1. / (1. + self.model.optimizer.decay * backend.cast(self.model.optimizer.iterations, backend.dtype(self.model.optimizer.decay))))
         return backend.eval(lr), backend.eval(self.model.optimizer.decay)
 
@@ -367,9 +362,10 @@ def run(model_path, logdir, stop, weights, weights_iteration, episode, epsilon, 
 
     configured_actions = [getattr(ACTIONS, action) for action in settings.ACTIONS]
 
+    print("Trainer started.")
+
     # Iterate over episodes until 'stop' signal
     while stop.value != 3:
-
         # Update tensorboard step every episode
         if episode.value > trainer.tensorboard.step:
             trainer.tensorboard.step = episode.value
@@ -379,6 +375,7 @@ def run(model_path, logdir, stop, weights, weights_iteration, episode, epsilon, 
             try:
                 trainer.update_replay_memory(transitions.get(True, 0.1))
             except:
+                traceback.print_exc()
                 break
 
         # Log stats in tensorboard

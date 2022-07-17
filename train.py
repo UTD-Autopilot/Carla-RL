@@ -4,6 +4,7 @@ from collections import deque
 from multiprocessing import Process, Value, Array, Queue
 from threading import Thread
 import subprocess
+import traceback
 
 import settings
 from sources import start_carla, restart_carla
@@ -109,7 +110,8 @@ if __name__ == '__main__':
 
     # Wait for trainer to be ready, it needs to, for example, dump weights that agents are going to update
     while trainer_stats[0] != TRAINER_STATE.waiting:
-        time.sleep(0.01)
+        print("Waiting for trainer...")
+        time.sleep(1)
 
     # Start one new process for each agent
     print('Starting agents...')
@@ -123,17 +125,16 @@ if __name__ == '__main__':
     print('Ready')
 
     # Start printing stats to a console
-    print('\n'*(settings.AGENTS+22))
-    console_stats = ConsoleStats(stop, duration, start_time, episode, epsilon, trainer_stats, agent_stats, episode_stats, carla_fps, weights_iteration, optimizer, carla_settings_threads, seconds_per_episode)
-    console_stats_thread = Thread(target=console_stats.print, daemon=True)
-    console_stats_thread.start()
+    # print('\n'*(settings.AGENTS+22))
+    # console_stats = ConsoleStats(stop, duration, start_time, episode, epsilon, trainer_stats, agent_stats, episode_stats, carla_fps, weights_iteration, optimizer, carla_settings_threads, seconds_per_episode)
+    # console_stats_thread = Thread(target=console_stats.print, daemon=True)
+    # console_stats_thread.start()
 
     # Create commands' object
     commands = Commands(stop, epsilon, discount, update_target_every, min_reward, save_checkpoint_every, seconds_per_episode, agent_show_preview, optimizer, car_npcs)
 
     # Main loop
     while True:
-
         # If everything is running or carla broke...
         if stop.value in[STOP.running, STOP.carla_simulator_error, STOP.restarting_carla_simulator, STOP.carla_simulator_restarted]:
 
@@ -158,12 +159,13 @@ if __name__ == '__main__':
                     try:
                         carla_fps_counters[process_no].append(carla_frametimes_list[process_no].get(True, 0.1))
                     except:
+                        traceback.print_exc()
                         break
                 carla_fps[process_no].value = len(carla_fps_counters[process_no]) / sum(carla_fps_counters[process_no]) if sum(carla_fps_counters[process_no]) > 0 else 0
 
         # If carla broke
         if stop.value == STOP.carla_simulator_error and settings.CARLA_HOSTS_TYPE == 'local':
-
+            print("CARLA BROKE.")
             # First check, set a timer because...
             if carla_check is None:
                 carla_check = time.time()
@@ -198,6 +200,7 @@ if __name__ == '__main__':
 
         # If stopping - cleanup and exit
         if stop.value == STOP.stopping:
+            print("Stopping...")
 
             # Trainer process already "knows" that, just wait for it to exit
             trainer_process.join()

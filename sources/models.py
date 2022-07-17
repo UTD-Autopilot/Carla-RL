@@ -5,17 +5,12 @@ import settings
 # Try to mute and then load Tensorflow and Keras
 # Muting seems to not work lately on Linux in any way
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-stdin = sys.stdin
-sys.stdin = open(os.devnull, 'w')
-stderr = sys.stderr
-sys.stderr = open(os.devnull, 'w')
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.ERROR)
-from keras.applications.xception import Xception
-from keras.models import Sequential, Model
-from keras.layers import Dense, GlobalAveragePooling2D, Input, Concatenate, Conv2D, AveragePooling2D, Activation, Flatten
-sys.stdin = stdin
-sys.stderr = stderr
+from tensorflow.keras.applications.xception import Xception
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input, Concatenate, Conv2D, AveragePooling2D, Activation, Flatten
+
 
 MODEL_NAME_PREFIX = ''
 
