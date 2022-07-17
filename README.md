@@ -2,7 +2,7 @@
 Reinforcement Learning codebase for self-driving car in Carla
 
 1. Install python 3.7.
-2. Download CARLA 0.9.11 from [here](https://github.com/carla-simulator/carla/releases/tag/0.9.11). Due to a bug in CARLA (see (this PR)[https://github.com/carla-simulator/carla/issues/4861]) we can't use carla 0.9.12 and up.
+2. Download CARLA 0.9.11 from [here](https://github.com/carla-simulator/carla/releases/tag/0.9.11). Due to a bug in CARLA (see [this PR](https://github.com/carla-simulator/carla/issues/4861)) we can't use carla 0.9.12 and up.
 3. Edit settings in settings.py
 4. Run with train.py
 5. You can just play using play.py after the model get trained.
